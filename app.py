@@ -88,10 +88,6 @@ elements_data = {
     'Ether ✨': [3, 4, 5, 4, 5]
 }
 
-# To account for permutations and combinations: Since the mappings are fixed, we'll interpret this as allowing users to select subsets/combinations of elements and theories for visualization.
-# Permutations: Reorder theories or elements interactively.
-# Combinations: Select which elements to show in radar, which columns in table.
-
 st.title("Visualizations of Elemental Analogies to String Theories")
 
 st.header("Mind Map (Text-Based)")
@@ -119,10 +115,22 @@ if selected_elements:
     })
 
     # Allow reordering theories (permutation)
-    permuted_theories = st.multiselect("Reorder Theories (Permutation)", theories, default=theories)
-    if len(permuted_theories) == len(theories):
+    order_str = st.text_input("Enter theory order separated by commas (for permutation)", ", ".join(theories))
+    permuted_theories = [th.strip() for th in order_str.split(",") if th.strip() in theories]
+    if len(permuted_theories) == len(theories) and set(permuted_theories) == set(theories):
         # Reorder the data based on permuted theories
-        theory_order = {th: idx for idx, th in enumerate(permuted_theories)}
+        theory_index = {th: theories.index(th) for th in theories}
+        radar_df['Intensity'] = [elements_data[el][theory_index[th] ] for el in radar_df['Element'] for th in permuted_theories if False]  # Wait, need to reorder properly
+        # Actually, to reorder, map the intensities according to new order
+        # First, for each element, get the intensities in original order, then permute
+        perm_index = {old_th: idx for idx, old_th in enumerate(theories)}
+        new_intensities = []
+        for el in selected_elements:
+            orig_int = elements_data[el]
+            new_int = [orig_int[perm_index[th]] for th in permuted_theories]
+            new_intensities.extend(new_int)
+        radar_df['Intensity'] = new_intensities
+        radar_df['Theory'] = permuted_theories * len(selected_elements)
         radar_df['Theory'] = pd.Categorical(radar_df['Theory'], categories=permuted_theories, ordered=True)
         radar_df = radar_df.sort_values('Theory')
 
@@ -130,8 +138,20 @@ if selected_elements:
                             range_r=[1, 5], title="Radar Chart of Analogy Intensity")
         st.plotly_chart(fig)
     else:
-        st.write("Select all theories to enable permutation.")
+        st.write("Invalid order; using default. Must include all unique theories separated by commas.")
+        # Use default
+        fig = px.line_polar(radar_df, r='Intensity', theta='Theory', color='Element', line_close=True,
+                            range_r=[1, 5], title="Radar Chart of Analogy Intensity")
+        st.plotly_chart(fig)
 else:
     st.write("Select at least one element.")
 
-st.markdown("""
+st.header("Deployment Instructions")
+st.write("1. Create a public GitHub repository (e.g., `elemental-string-theories-viz`).")
+st.write("2. Save this code as `app.py` in the repository's root.")
+st.write("3. Add a `requirements.txt` file with:")
+st.code("""streamlit
+pandas
+plotly""")
+st.write("4. Go to [Streamlit Cloud](https://share.streamlit.io/), sign in with GitHub, and deploy the app by connecting to your repo.")
+st.write("5. The app will be publicly accessible at a URL like `https://<your-app-name>.streamlit.app/`.")
