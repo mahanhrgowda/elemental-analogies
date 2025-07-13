@@ -134,4 +134,4 @@ if selected_elements:
 else:
     st.write("Select at least one element.")
 
-st.markdown(text)
+st.markdown("""
