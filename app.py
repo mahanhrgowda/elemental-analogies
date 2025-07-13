@@ -119,11 +119,7 @@ if selected_elements:
     permuted_theories = [th.strip() for th in order_str.split(",") if th.strip() in theories]
     if len(permuted_theories) == len(theories) and set(permuted_theories) == set(theories):
         # Reorder the data based on permuted theories
-        theory_index = {th: theories.index(th) for th in theories}
-        radar_df['Intensity'] = [elements_data[el][theory_index[th] ] for el in radar_df['Element'] for th in permuted_theories if False]  # Wait, need to reorder properly
-        # Actually, to reorder, map the intensities according to new order
-        # First, for each element, get the intensities in original order, then permute
-        perm_index = {old_th: idx for idx, old_th in enumerate(theories)}
+        perm_index = {th: idx for idx, th in enumerate(theories)}
         new_intensities = []
         for el in selected_elements:
             orig_int = elements_data[el]
